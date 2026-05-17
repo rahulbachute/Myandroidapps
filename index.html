@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050b22" />
+  <title>Design of Engine Components — Mobile Learning App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#050b22', steel: '#1d2a44', cyanGlow: '#00e5ff', orangeGlow: '#ff8a2a'
+          },
+          boxShadow: {
+            glow: '0 0 20px rgba(0,229,255,0.22)',
+            orange: '0 0 14px rgba(255,138,42,0.24)'
+          },
+          keyframes: {
+            pulseGrid: { '0%,100%': {opacity:'0.2'}, '50%': {opacity:'0.5'} },
+            rise: { '0%': {transform:'translateY(8px)', opacity:'0'}, '100%': {transform:'translateY(0)', opacity:'1'} },
+            spinSlow: { '0%': {transform:'rotate(0deg)'}, '100%': {transform:'rotate(360deg)'} },
+            piston: { '0%,100%': {transform:'translateY(0)'}, '50%': {transform:'translateY(65px)'} }
+          },
+          animation: {
+            pulseGrid: 'pulseGrid 4s ease-in-out infinite', rise: 'rise .45s ease-out', spinSlow: 'spinSlow 5s linear infinite', piston: 'piston 1.2s ease-in-out infinite'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body{background:#050b22;color:#dbeafe;font-family:Inter,system-ui,sans-serif;}
+    .glass{background:linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.02));backdrop-filter: blur(10px);border:1px solid rgba(148,163,184,.25)}
+    .grid-overlay::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.08) 1px,transparent 1px);background-size:24px 24px;pointer-events:none;animation:pulseGrid 4s ease-in-out infinite}
+    .hide{display:none}
+    .nav-btn.active{color:#00e5ff}
+  </style>
+</head>
+<body class="min-h-screen pb-20">
+  <main class="relative grid-overlay max-w-md mx-auto px-4 pt-4 space-y-4">
+    <header class="glass rounded-2xl p-4 shadow-glow animate-rise">
+      <p class="text-xs text-cyanGlow uppercase tracking-widest">Advanced Mechanical Engineering Learning App</p>
+      <h1 class="text-xl font-bold">Design of Engine Components</h1>
+      <p class="text-xs text-slate-300 mt-1">Mobile-first simulation studio for mechanical engineering students.</p>
+    </header>
+
+    <section id="dashboard" class="view space-y-3">
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="glass rounded-xl p-3"><p class="text-slate-400">Modules</p><p class="text-2xl font-bold text-cyanGlow">10</p></div>
+        <div class="glass rounded-xl p-3"><p class="text-slate-400">Practice Qs</p><p class="text-2xl font-bold text-orangeGlow" id="qCount">120+</p></div>
+      </div>
+      <div id="cards" class="space-y-2"></div>
+    </section>
+
+    <section id="sim" class="view hide space-y-3">
+      <div class="glass rounded-2xl p-4">
+        <h2 class="font-semibold text-cyanGlow">Unit 1: Piston Reciprocation + Pressure</h2>
+        <div class="mt-3 h-44 relative rounded-xl bg-slate-900/60 overflow-hidden border border-slate-700">
+          <div class="absolute left-1/2 -translate-x-1/2 top-2 w-20 h-8 rounded bg-slate-500"></div>
+          <div class="absolute left-1/2 -translate-x-1/2 top-10 w-14 h-16 rounded bg-orange-400/80 animate-piston"></div>
+          <div id="pressure" class="absolute bottom-0 left-0 right-0 h-10 bg-cyan-400/25"></div>
+        </div>
+        <label class="text-xs block mt-2">Combustion pressure bar</label>
+        <input id="pressRange" type="range" min="20" max="120" value="40" class="w-full"/>
+      </div>
+      <div class="glass rounded-2xl p-4">
+        <h3 class="text-orangeGlow font-semibold">Unit 2: Crank-Slider Motion</h3>
+        <label class="text-xs">RPM: <span id="rpmVal">900</span></label>
+        <input id="rpm" type="range" min="300" max="4000" value="900" class="w-full" />
+        <canvas id="crankCanvas" width="320" height="130" class="w-full mt-2 rounded-lg bg-slate-950/60"></canvas>
+      </div>
+    </section>
+
+    <section id="calc" class="view hide space-y-3">
+      <div class="glass rounded-2xl p-4 space-y-2">
+        <h2 class="font-semibold text-cyanGlow">Cylinder & Piston Calculator</h2>
+        <input id="bore" placeholder="Bore (mm)" type="number" class="w-full bg-slate-900 rounded p-2 text-sm" />
+        <input id="pressureIn" placeholder="Pressure (MPa)" type="number" class="w-full bg-slate-900 rounded p-2 text-sm" />
+        <input id="allow" placeholder="Allowable Stress (MPa)" type="number" class="w-full bg-slate-900 rounded p-2 text-sm" />
+        <select id="material" class="w-full bg-slate-900 rounded p-2 text-sm"><option>Cast Iron</option><option>Aluminum Alloy</option><option>Forged Steel</option></select>
+        <button id="calcBtn" class="w-full bg-cyanGlow text-navy py-2 rounded font-semibold">Compute Design</button>
+        <div id="calcOut" class="text-sm text-slate-200"></div>
+      </div>
+      <div class="glass rounded-2xl p-4 text-sm">
+        <h3 class="text-orangeGlow font-semibold">Flywheel Calculator (quick)</h3>
+        <p>Energy = ½ Iω² • Use Virtual Lab for full design.</p>
+      </div>
+    </section>
+
+    <section id="practice" class="view hide space-y-3">
+      <div class="glass rounded-2xl p-4">
+        <h2 class="font-semibold text-cyanGlow">Adaptive Practice Arena</h2>
+        <div class="flex gap-2 mt-2">
+          <button class="bg-steel rounded px-3 py-1 text-xs" onclick="genQ('mcq')">MCQ</button>
+          <button class="bg-steel rounded px-3 py-1 text-xs" onclick="genQ('numerical')">Numerical</button>
+          <button class="bg-steel rounded px-3 py-1 text-xs" onclick="genQ('viva')">Viva</button>
+        </div>
+        <div id="question" class="mt-3 text-sm"></div>
+      </div>
+      <div class="glass rounded-2xl p-4 text-sm">
+        <h3 class="text-orangeGlow font-semibold">Self-Evaluation</h3>
+        <p>Timed Challenge • Instant Evaluation • Mistake Analysis • Revision Mode</p>
+      </div>
+    </section>
+
+    <section id="lab" class="view hide space-y-3">
+      <div class="glass rounded-2xl p-4 text-sm space-y-2">
+        <h2 class="font-semibold text-cyanGlow">Virtual Engine Testing Laboratory</h2>
+        <p>Simulators: Engine selection, torque & power estimator, emission trend visualizer, oscilloscope diagnostics, and fuel economy analyzer.</p>
+        <details class="bg-slate-900/70 rounded p-2"><summary>Unit Modules</summary>
+          <ul class="list-disc ml-4 mt-2 space-y-1 text-xs">
+            <li>Unit 3: Valve timing, cam profile, lubrication & cooling flows</li>
+            <li>Unit 4: Flywheel energy storage, rim stress, torque fluctuations</li>
+            <li>Unit 5: Bearing explorer, life calculator, failure modes, challenge wheel</li>
+            <li>Unit 6: Engine testing equipment and performance analytics</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <button class="fixed bottom-24 right-4 w-12 h-12 bg-orangeGlow text-navy rounded-full shadow-orange font-bold" onclick="genQ('ai')">AI</button>
+
+  <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-slate-800">
+    <div class="max-w-md mx-auto grid grid-cols-5 text-xs text-center py-2">
+      <button class="nav-btn active" data-target="dashboard">Home</button>
+      <button class="nav-btn" data-target="sim">Sim</button>
+      <button class="nav-btn" data-target="calc">Calc</button>
+      <button class="nav-btn" data-target="practice">Practice</button>
+      <button class="nav-btn" data-target="lab">Lab</button>
+    </div>
+  </nav>
+
+<script>
+const modules=[
+'Dashboard','Interactive Theory','Design Simulations','Animated Engine Systems','Design Calculators','Practice Arena','AI Question Generator','Formula Handbook','Virtual Engine Lab','Self-Evaluation Tests'];
+const cards=document.getElementById('cards');
+modules.forEach((m,i)=>cards.innerHTML+=`<div class='glass rounded-xl p-3 text-sm flex justify-between'><span>${i+1}. ${m}</span><span class='text-cyanGlow'>→</span></div>`)
+
+document.querySelectorAll('.nav-btn').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hide'));
+  document.getElementById(btn.dataset.target).classList.remove('hide');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+});
+
+pressRange.oninput=e=>pressure.style.height=(20+e.target.value*0.8)+'px';
+
+calcBtn.onclick=()=>{
+  const b=+bore.value,p=+pressureIn.value,s=+allow.value;
+  if(!b||!p||!s) return calcOut.textContent='Enter all values.';
+  const t=(p*b)/(2*s)+3;
+  const piston=0.6*b;
+  const sf=s/(p*10);
+  calcOut.innerHTML=`<p>Cylinder thickness: <b>${t.toFixed(2)} mm</b></p><p>Piston diameter (est.): <b>${piston.toFixed(2)} mm</b></p><p>Safety factor: <b>${sf.toFixed(2)}</b></p><p class='text-xs text-slate-400 mt-2'>Step: t = (P×D)/(2σ)+3 ; material: ${material.value}</p>`;
+}
+
+function genQ(type){
+ const bank={
+  mcq:'MCQ: In I.C. engine cylinder design, hoop stress is primarily due to internal gas pressure. (A) True (B) False',
+  numerical:'Numerical: For bore 100 mm, pressure 3 MPa, allowable stress 40 MPa, compute cylinder wall thickness.',
+  viva:'Viva: Why is flywheel required in multi-cylinder engines despite relatively uniform torque output?',
+  ai:'AI Q-Gen: Compare roller and needle bearings for high radial load with limited installation space; justify selection.'
+ }
+ question.innerHTML=`<p class='text-orangeGlow'>${type.toUpperCase()} Mode</p><p>${bank[type]}</p><p class='text-xs mt-2 text-slate-400'>Instant hint: Open Formula Handbook to review governing equations.</p>`
+}
+window.genQ=genQ;
+
+const c=document.getElementById('crankCanvas'),ctx=c.getContext('2d'); let ang=0, rpmNow=900;
+rpm.oninput=e=>{rpmNow=+e.target.value; rpmVal.textContent=rpmNow}
+function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
+  const cx=80, cy=65, r=28; ang += rpmNow/25000;
+  const x=cx+r*Math.cos(ang), y=cy+r*Math.sin(ang);
+  const pistonX=235+Math.cos(ang)*40;
+  ctx.strokeStyle='#00e5ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#ff8a2a';ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#9ca3af';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(pistonX,65);ctx.stroke();
+  ctx.fillStyle='#334155';ctx.fillRect(pistonX,50,38,30);
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
